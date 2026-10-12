@@ -18,6 +18,7 @@ const customJestConfig = {
     "!src/instrumentation.ts",
   ],
   coverageDirectory: "<rootDir>/coverage",
+  coverageReporters: ["text", "lcov", "json-summary"],
 };
 
 export default createJestConfig(customJestConfig);

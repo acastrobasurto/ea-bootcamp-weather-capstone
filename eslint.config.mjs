@@ -12,7 +12,20 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated coverage output.
+    "coverage/**",
+    // Plain CommonJS scripts used only by CI (GitHub Actions), not part
+    // of the app's TypeScript/React source.
+    ".github/workflows/scripts/**",
   ]),
+  {
+    // Tests that exercise the CommonJS CI scripts above must require()
+    // them directly (they are not transpiled ESM/TS).
+    files: ["tests/**/*.test.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

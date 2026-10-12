@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: ["**"]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   lint-and-coverage:
     name: Lint & test coverage
@@ -12,6 +16,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history so gitleaks can scan past commits, not just the
+          # working tree, for leaked secrets.
+          fetch-depth: 0
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -35,3 +48,35 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 14
+
+      - name: Post coverage-by-module PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { buildCoverageComment } = require('${{ github.workspace }}/.github/workflows/scripts/coverage-by-module.js');
+            const body = buildCoverageComment('${{ github.workspace }}/coverage/coverage-summary.json');
+            const marker = '<!-- coverage-by-module-report -->';
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
