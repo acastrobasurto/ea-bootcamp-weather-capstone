@@ -1,0 +1,74 @@
+# VA Cities Weather
+
+A simple Next.js (App Router, TypeScript) app that shows current weather
+for 10 Virginia cities (default: **Manassas**), backed by the
+[OpenWeatherMap Current Weather Data API](https://openweathermap.org/current).
+
+The browser never talks to OpenWeatherMap directly. All requests go through
+a server-side **BFF route** (`app/api/weather/route.ts`), which keeps the
+API key on the server and returns sanitized JSON.
+
+## Cities
+
+Manassas (default), Richmond, Virginia Beach, Norfolk, Arlington,
+Alexandria, Charlottesville, Roanoke, Fairfax, Fredericksburg.
+
+## Architecture
+
+- `src/lib/cities.ts` — static city catalog (id, name, lat/lon).
+- `src/lib/weather-provider.ts` — `WeatherProvider` interface +
+  `WeatherSnapshot` type (dependency inversion boundary).
+- `src/lib/openweathermap-provider.ts` — `OpenWeatherMapProvider`, the
+  concrete `WeatherProvider` implementation calling OpenWeatherMap.
+- `src/lib/weather-route-handler.ts` — framework-agnostic handler factory
+  used by the route; validates input, sanitizes errors.
+- `src/app/api/weather/route.ts` — Next.js Route Handler (the BFF) that
+  wires `OpenWeatherMapProvider` (constructed with the server-only API key)
+  into the handler.
+- `src/components/CitySelector.tsx`, `src/components/WeatherDisplay.tsx` —
+  UI components.
+- `src/app/page.tsx` — client page that fetches `/api/weather` and renders
+  the selector + display.
+
+Everything above was built test-first; see `tests/` for the corresponding
+unit/integration/component tests.
+
+## Getting a free OpenWeatherMap API key
+
+1. Go to <https://openweathermap.org/current> and click **Sign Up** (free).
+2. After confirming your email, go to your account → **API keys** tab.
+3. Copy the default key (or generate a new one). New keys can take a few
+   minutes to activate.
+
+## Setup
+
+```bash
+cp .env.example .env.local
+# edit .env.local and set OPENWEATHER_API_KEY=<your key>
+
+npm install
+npm test        # run the full test suite
+npm run build   # production build
+npm run dev     # start the dev server at http://localhost:3000
+```
+
+Without a valid `OPENWEATHER_API_KEY`, the app still runs: the UI loads,
+the default city is selected, and the API route returns a sanitized error
+(no key or raw provider details are ever leaked to the browser).
+
+## Testing
+
+```bash
+npm test
+```
+
+Covers: the city catalog, `OpenWeatherMapProvider` (mocked HTTP, success +
+error cases), the `/api/weather` route handler (including 400 validation
+and sanitized error responses), and the `CitySelector`/`WeatherDisplay`
+components.
+
+## Spec Kit
+
+This feature was specified using [Spec Kit](https://github.com/github/spec-kit)
+before any implementation code was written. See
+`specs/001-va-cities-weather/{spec.md,plan.md,tasks.md}`.
