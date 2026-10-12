@@ -1,12 +1,12 @@
+import { getOpenWeatherApiKey } from "@/lib/env";
 import { OpenWeatherMapProvider } from "@/lib/openweathermap-provider";
 import { createWeatherHandler } from "@/lib/weather-route-handler";
 import { WeatherProvider } from "@/lib/weather-provider";
 
 function buildProvider(): WeatherProvider {
-  const apiKey = process.env.OPENWEATHER_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENWEATHER_API_KEY is not configured.");
-  }
+  // Throws MissingEnvVarError (logged server-side, never sent to the
+  // client) if OPENWEATHER_API_KEY is not configured.
+  const apiKey = getOpenWeatherApiKey();
   return new OpenWeatherMapProvider(apiKey);
 }
 

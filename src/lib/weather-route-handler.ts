@@ -47,7 +47,11 @@ export function createWeatherHandler(
     let provider: WeatherProvider;
     try {
       provider = getProvider();
-    } catch {
+    } catch (error) {
+      // Logged server-side only - the thrown error (e.g. MissingEnvVarError)
+      // never contains a secret, but the sanitized client response never
+      // includes error details either way.
+      console.error("[weather-route] failed to construct WeatherProvider:", error);
       return jsonResponse(500, {
         error: "The weather service is not configured correctly.",
       });
