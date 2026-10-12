@@ -12,6 +12,12 @@ const customJestConfig = {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/.next/"],
+  collectCoverageFrom: [
+    "src/**/*.{ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/instrumentation.ts",
+  ],
+  coverageDirectory: "<rootDir>/coverage",
 };
 
 export default createJestConfig(customJestConfig);
